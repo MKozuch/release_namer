@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,15 @@ void main() async {
   // for(var i =0; i<10; ++i){
   //   print(pew.generate());
   //}
+
+
+  WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    setWindowTitle('Release namer');
+    setWindowMinSize(const Size(400, 300));
+    setWindowMaxSize(Size.infinite);
+    setWindowFrame(const Rect.fromLTWH(0, 0, 640, 480));
+  }
 
   runApp(MyApp());
 }
@@ -41,13 +52,6 @@ class TitleGeneratorCubit extends Cubit<String> {
 }
 
 class MyApp extends StatelessWidget {
-  WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowTitle('Flutter Demo');
-    setWindowMinSize(const Size(400, 300));
-    setWindowMaxSize(Size.infinite);
-  }
-
 
   MyApp({super.key});
 
