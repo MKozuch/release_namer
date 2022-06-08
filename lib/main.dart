@@ -1,96 +1,86 @@
-import 'dart:math';
+import 'package:flutter/material.dart';
 
-// import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:window_size/window_size.dart';
 
+import 'package:release_generator/title_provider.dart';
 
 void main() async {
-  var pew = await ReleaseNameGenerator.create();
-  for(var i =0; i<10; ++i){
-    print(pew.generate());
+  // var pew = await ReleaseNameGenerator.create();
+  // for(var i =0; i<10; ++i){
+  //   print(pew.generate());
+  //}
+
+  runApp(MyApp());
+}
+
+class TitleGeneratorCubit extends Cubit<String> {
+  static final List<String> _lst = [
+    'Bustling Bat',
+    'Frayed Felidae',
+    'Greedy Goldfish',
+    'Grown Giant Panda',
+    'Humming Hare',
+    'Jaded Jay',
+    'Livid List',
+    'Pure Pony',
+    'Rundown Rhinoceros',
+    'Yellow Yak',
+  ];
+
+  var _currentIndex = 0;
+
+  TitleGeneratorCubit() : super(_lst[0]);
+
+  void next() {
+    _currentIndex++;
+    _currentIndex %= _lst.length;
+    emit(_lst[_currentIndex]);
   }
 }
 
-
-
-typedef Dict = Map<String, List<String>>;
-
-class ReleaseNameGenerator{
-
-  late Dict _animalDict;
-  late Dict _adjectiveDict;
-  late Random _rng;
-
-  ReleaseNameGenerator._create();
-
-  static Future<ReleaseNameGenerator> create() async{
-    var generator = ReleaseNameGenerator._create();
-
-    var futures = <Future>[];
-    futures.add(_makeDictAsync('./assets/animals.txt'           ).then((dict){generator._animalDict    = dict;}));
-    futures.add(_makeDictAsync('./assets/english-adjectives.txt').then((dict){generator._adjectiveDict = dict;}));
-
-    generator._rng = Random();
-    await Future.wait(futures);
-
-    return generator;
+class MyApp extends StatelessWidget {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    setWindowTitle('Flutter Demo');
+    setWindowMinSize(const Size(400, 300));
+    setWindowMaxSize(Size.infinite);
   }
 
-  String generate(){
-    var letter = _randomLetter();
-    while(!_dictContainsLetter(_animalDict, letter) || !_dictContainsLetter(_adjectiveDict, letter)){
-      letter = _randomLetter();
-    }
 
-    return ("${_randomDictEntryForLetter(_adjectiveDict, letter)} ${_randomDictEntryForLetter(_animalDict, letter)}").capitalize();
-  }
+  MyApp({super.key});
 
-  String _randomDictEntryForLetter(Dict dict, String letter){
-    return dict[letter]?.elementAt(_rng.nextInt(dict[letter]!.length)) ?? '';
-  }
-
-  bool _dictContainsLetter(Dict dict, String letter){
-    return dict.containsKey(letter) && dict[letter]!.isNotEmpty;
-  }
-
-  String _randomDictEntry(Dict dict){
-    var randomLetter = _randomLetter();
-    while(!_dictContainsLetter(dict, randomLetter))
-      randomLetter = _randomLetter();
-
-    return _randomDictEntryForLetter(dict, randomLetter);
-  }
-
-  static Future<Dict> _makeDictAsync (String fileName) async{
-    var dict = Dict();
-
-    var file = File(fileName);
-    file.readAsLinesSync().forEach((line) {
-      line = line.trim();
-      if(line.isEmpty)
-        return;
-
-      final startLetter = line.substring(0,1).toLowerCase();
-      dict[startLetter] ??= []; 
-      dict[startLetter]?.add(line.trim());
-    });
-
-    return dict;
-  }
-
-  String _randomLetter(){
-    final a = 'a'.codeUnitAt(0);
-    final z = 'z'.codeUnitAt(0);
-    return String.fromCharCode(_rng.nextInt(z-a)+a);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+        home: BlocProvider(
+            create: (context) => TitleGeneratorCubit(), child: Page1()));
   }
 }
 
+class Page1 extends StatelessWidget {
+  Page1({super.key});
 
-extension StringExtension on String {
-    String capitalize() {
-      return split(' ')
-        .map((e) => e[0].toUpperCase()+e.substring(1).toLowerCase())
-        .join(' ');
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Release name generator')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            BlocBuilder<TitleGeneratorCubit, String>(
+                builder: (context, str) => Text(str)),
+            ElevatedButton(
+              child: const Text('Generate'),
+              onPressed: () {
+                context.read<TitleGeneratorCubit>().next();
+              },
+            )
+          ],
+        )
+      )
+    );
+  }
 }
