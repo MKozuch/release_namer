@@ -1,2 +1,3 @@
 # release_namer
-Are you a fan of alliteration and looking for a way to distinct your releases? Look no further
+Are you an avid aficionado of alliteration and awaiting approach to really render your releases recognizable? 
+Look no further release_namer is here
