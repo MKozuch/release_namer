@@ -14,7 +14,6 @@ void main() async {
   //   print(pew.generate());
   //}
 
-
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('Release namer');
@@ -26,33 +25,26 @@ void main() async {
   runApp(MyApp());
 }
 
-class TitleGeneratorCubit extends Cubit<String> {
-  static final List<String> _lst = [
-    'Bustling Bat',
-    'Frayed Felidae',
-    'Greedy Goldfish',
-    'Grown Giant Panda',
-    'Humming Hare',
-    'Jaded Jay',
-    'Livid List',
-    'Pure Pony',
-    'Rundown Rhinoceros',
-    'Yellow Yak',
-  ];
+class TitleGeneratorCubit extends Cubit<String?> {
+  ReleaseNameGenerator? gen;
 
-  var _currentIndex = 0;
-
-  TitleGeneratorCubit() : super(_lst[0]);
+  TitleGeneratorCubit() : super(null) {
+    ReleaseNameGenerator.create().then((value) {
+      gen = value;
+      next();
+    });
+  }
 
   void next() {
-    _currentIndex++;
-    _currentIndex %= _lst.length;
-    emit(_lst[_currentIndex]);
+    if (gen == null) {
+      emit(null);
+    }
+
+    emit(gen!.generate());
   }
 }
 
 class MyApp extends StatelessWidget {
-
   MyApp({super.key});
 
   @override
@@ -71,20 +63,29 @@ class Page1 extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Release name generator')),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            BlocBuilder<TitleGeneratorCubit, String>(
-                builder: (context, str) => Text(str)),
-            ElevatedButton(
-              child: const Text('Generate'),
-              onPressed: () {
-                context.read<TitleGeneratorCubit>().next();
-              },
-            )
-          ],
-        )
-      )
+        child: BlocBuilder<TitleGeneratorCubit, String?>(
+          builder: (contex, str) {
+            final isLoading = context.read<TitleGeneratorCubit>().state == null;
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (!isLoading) 
+                 ...[ 
+                    Text(str ?? 'Loading'),
+                    ElevatedButton(
+                      child: const Text('Generate'),
+                      onPressed: () {
+                        context.read<TitleGeneratorCubit>().next();
+                      },
+                    ),
+                  ],
+                if (isLoading) const CircularProgressIndicator()
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
