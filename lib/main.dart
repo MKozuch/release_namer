@@ -9,10 +9,6 @@ import 'package:window_size/window_size.dart';
 import 'package:release_generator/title_provider.dart';
 
 void main() async {
-  // var pew = await ReleaseNameGenerator.create();
-  // for(var i =0; i<10; ++i){
-  //   print(pew.generate());
-  //}
 
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -50,8 +46,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: BlocProvider(
-            create: (context) => TitleGeneratorCubit(), child: Page1()));
+      theme: ThemeData(useMaterial3: true),
+      home: BlocProvider(
+        create: (context) => TitleGeneratorCubit(), child: Page1()));
   }
 }
 

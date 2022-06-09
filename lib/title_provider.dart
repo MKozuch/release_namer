@@ -3,6 +3,7 @@ import 'dart:math';
 
 typedef Dict = Map<String, List<String>>;
 
+
 class ReleaseNameGenerator{
 
   late Dict _animalDict;
@@ -17,6 +18,7 @@ class ReleaseNameGenerator{
     var futures = <Future>[];
     futures.add(_makeDictAsync('./assets/animals.txt'           ).then((dict){generator._animalDict    = dict;}));
     futures.add(_makeDictAsync('./assets/english-adjectives.txt').then((dict){generator._adjectiveDict = dict;}));
+    futures.add(Future.delayed(const Duration(seconds: 3))); // simulate fetching data
 
     generator._rng = Random();
     await Future.wait(futures);
@@ -43,8 +45,9 @@ class ReleaseNameGenerator{
 
   String _randomDictEntry(Dict dict){
     var randomLetter = _randomLetter();
-    while(!_dictContainsLetter(dict, randomLetter))
+    while(!_dictContainsLetter(dict, randomLetter)){
       randomLetter = _randomLetter();
+    }
 
     return _randomDictEntryForLetter(dict, randomLetter);
   }
@@ -55,8 +58,9 @@ class ReleaseNameGenerator{
     var file = File(fileName);
     file.readAsLinesSync().forEach((line) {
       line = line.trim();
-      if(line.isEmpty)
+      if(line.isEmpty){
         return;
+      }
 
       final startLetter = line.substring(0,1).toLowerCase();
       dict[startLetter] ??= []; 
