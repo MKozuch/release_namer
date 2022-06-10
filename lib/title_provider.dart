@@ -3,55 +3,122 @@ import 'dart:math';
 
 typedef Dict = Map<String, List<String>>;
 
-class ReleaseNameGeneratorState{
-  String _currentLetter;
-  int currentAdjectiveIndex;
-  int currentAnimalIndex;
+class ReleaseNameModelIndex{
+  String letter = '';
+  int adjectiveIndex = 0;
+  int animalIndex = 0;
+
+  ReleaseNameWordsModel? model;
+
+
 }
 
 class ReleaseNameWordsModel{
-  
-}
-
-class 
-
-class ReleaseNameGenerator{
-
   late Dict _animalDict;
   late Dict _adjectiveDict;
-  late Random _rng;
+  static late ReleaseNameWordsModel _instance;
 
-  ReleaseNameGenerator._create();
+  ReleaseNameWordsModel._create();
 
-  static Future<ReleaseNameGenerator> create() async{
-    var generator = ReleaseNameGenerator._create();
+  static Future<ReleaseNameWordsModel> create() async {
+    var model = ReleaseNameWordsModel._create();
 
     var futures = <Future>[];
-    futures.add(_makeDictAsync('./assets/animals.txt'           ).then((dict){generator._animalDict    = dict;}));
-    futures.add(_makeDictAsync('./assets/english-adjectives.txt').then((dict){generator._adjectiveDict = dict;}));
-    futures.add(Future.delayed(const Duration(seconds: 3))); // simulate fetching data
-
-    generator._rng = Random();
+    futures.add(_makeDictAsync('./assets/animals.txt'           ).then((dict){model._animalDict    = dict;}));
+    futures.add(_makeDictAsync('./assets/english-adjectives.txt').then((dict){model._adjectiveDict = dict;}));
+    futures.add(Future.delayed(const Duration(seconds: 1))); // simulate fetching data
     await Future.wait(futures);
 
-    return generator;
+    return model;
   }
 
-  String generate(){
-    var letter = _randomUsableLetter();
-    return ("${_randomDictEntryForLetter(_adjectiveDict, letter)} ${_randomDictEntryForLetter(_animalDict, letter)}").capitalize();
+  List<String>? adjectivesForLetter(String s){
+    return _adjectiveDict[s];
+  }    
+  List<String>? animalsForLetter(String s){
+    return _animalDict[s];
   }
 
+  bool isLetterValid(String s){
+    return _animalDict[s]    != null && _animalDict[s]!.isNotEmpty
+        && _adjectiveDict[s] != null && _adjectiveDict[s]!.isNotEmpty;
+  }
+
+  bool isIndexValid(ReleaseNameModelIndex idx){
+    return this == idx.model
+      && isLetterValid(idx.letter)
+      && _adjectiveDict[idx.letter]!.length > idx.adjectiveIndex
+      && _animalDict[idx.letter]!.length > idx.animalIndex;
+  }
+
+  String? nameAt(ReleaseNameModelIndex idx){
+    if(isIndexValid(idx)){
+      return '${_adjectiveDict[idx.letter]![idx.adjectiveIndex]} ${}';
+    }
+    return null;
+  }
+
+  String? adjectiveAt(ReleaseNameModelIndex idx){
+    return isIndexValid(idx)
+      ? _adjectiveDict[idx.letter]![idx.adjectiveIndex]
+      : null;
+  }
+  String? animalAt(ReleaseNameModelIndex idx){
+    return isIndexValid(idx)
+      ? _animalDict[idx.letter]![idx.animalIndex]
+      : null;
+  }
+
+  static Future<Dict> _makeDictAsync(String fileName) async{
+    var dict = Dict();
+
+    var file = File(fileName);
+    file.readAsLinesSync().forEach((line) {
+      line = line.trim().capitalize();
+      if(line.isEmpty){
+        return;
+      }
+
+      final startLetter = line.substring(0,1).toLowerCase();
+      dict[startLetter] ??= []; 
+      dict[startLetter]?.add(line.trim());
+    });
+
+    return dict;
+  }
+}
 
 
+class ReleaseNameGenerator{
+  late Random _rng;
+  late ReleaseNameWordsModel _model;
+
+  ReleaseNameGenerator(){
+    _rng = Random();
+  }
+
+  set model(model){
+    _model = model;
+  }
+
+  ReleaseNameModelIndex randomIndex(){
+    var index = ReleaseNameModelIndex();
+    index.model = _model;
+    index.letter = _randomUsableLetter();
+    index.adjectiveIndex = _rng.nextInt(_model.adjectivesForLetter(index.letter)!.length);
+    index.animalIndex    = _rng.nextInt(_model.animalsForLetter(   index.letter)!.length);
+    assert(_model.isIndexValid(index));
+    return index;
+  }
 
   String _randomUsableLetter(){
     var letter = _randomLetter();
-    while(!_dictContainsLetter(_animalDict, letter) || !_dictContainsLetter(_adjectiveDict, letter)){
+    while(!_model.isLetterValid(letter)){
       letter = _randomLetter();
     }
     return letter;
   }
+
 
   String _randomDictEntryForLetter(Dict dict, String letter){
     return dict[letter]?.elementAt(_rng.nextInt(dict[letter]!.length)) ?? '';
@@ -68,24 +135,6 @@ class ReleaseNameGenerator{
     }
 
     return _randomDictEntryForLetter(dict, randomLetter);
-  }
-
-  static Future<Dict> _makeDictAsync(String fileName) async{
-    var dict = Dict();
-
-    var file = File(fileName);
-    file.readAsLinesSync().forEach((line) {
-      line = line.trim();
-      if(line.isEmpty){
-        return;
-      }
-
-      final startLetter = line.substring(0,1).toLowerCase();
-      dict[startLetter] ??= []; 
-      dict[startLetter]?.add(line.trim());
-    });
-
-    return dict;
   }
 
   String _randomLetter(){

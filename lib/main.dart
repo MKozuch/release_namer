@@ -22,21 +22,31 @@ void main() async {
 }
 
 class TitleGeneratorCubit extends Cubit<String?> {
-  ReleaseNameGenerator? gen;
+  late ReleaseNameGenerator gen;
+  late ReleaseNameModelIndex idx;
+  ReleaseNameWordsModel? model;
 
   TitleGeneratorCubit() : super(null) {
-    ReleaseNameGenerator.create().then((value) {
-      gen = value;
-      next();
+    gen = ReleaseNameGenerator();
+    idx = ReleaseNameModelIndex();
+
+    ReleaseNameWordsModel.create().then((value) {
+      model = value;
+
+      gen.model = model;
+      idx.model = model;
+      nextReleaseName();
     });
   }
 
-  void next() {
-    if (gen == null) {
+  void nextReleaseName() {
+    if (model == null) {
       emit(null);
     }
 
-    emit(gen!.generate());
+    idx = gen.randomIndex();
+    
+    emit(model!.nameAt(idx));
   }
 }
 
@@ -73,7 +83,7 @@ class Page1 extends StatelessWidget {
                     ElevatedButton(
                       child: const Text('Generate'),
                       onPressed: () {
-                        context.read<TitleGeneratorCubit>().next();
+                        context.read<TitleGeneratorCubit>().nextReleaseName();
                       },
                     ),
                   ],
