@@ -64,6 +64,14 @@ class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
     idx.nextAnimal();
     _emitState();
   }
+  void previousAdjective(){
+    idx.previousAdjective();
+    _emitState();
+  }
+  void previousAnimal(){
+    idx.previousAnimal();
+    _emitState();
+  }
 
 
   void _emitState(){
@@ -77,7 +85,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(useMaterial3: true),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: const ColorScheme.dark()
+      ),
       home: BlocProvider(
         create: (context) => ReleaseGeneratorCubit(), child: Page1()));
   }
@@ -102,20 +113,39 @@ class Page1 extends StatelessWidget {
                  ...[ 
                    Row(
                     children: [
-                      Text(state!.adjective),
-                      TextButton(
-                        onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
-                        child: const Icon(Icons.skip_next)
+                      Expanded( child: 
+                        TextButton(
+                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAdjective(), 
+                          child: const Icon(Icons.navigate_before),
+                        )
+                      ),
+                      Expanded(child: 
+                        Text(state!.adjective, textAlign: TextAlign.center)),
+                      Expanded(child: 
+                        TextButton(
+                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
+                          child: const Icon(Icons.navigate_next)
+                        )
                       )
                    ],
                   ),
                   Row(
                     children: [
-                      Text(state!.animal),
-                      TextButton(
-                        onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal, 
-                        child: const Icon(Icons.skip_next)
-                      )
+                      Expanded(child:
+                        TextButton(
+                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAnimal(), 
+                          child: const Icon(Icons.navigate_before),
+                        )
+                      ),
+                      Expanded(child: 
+                        Text(state!.animal, textAlign: TextAlign.center,),
+                      ),
+                      Expanded(child: 
+                        TextButton(
+                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal(), 
+                          child: const Icon(Icons.navigate_next)
+                        ),
+                      ),
                    ],
                   ),
 
