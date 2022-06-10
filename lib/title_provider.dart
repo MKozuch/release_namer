@@ -3,6 +3,17 @@ import 'dart:math';
 
 typedef Dict = Map<String, List<String>>;
 
+class ReleaseNameGeneratorState{
+  String _currentLetter;
+  int currentAdjectiveIndex;
+  int currentAnimalIndex;
+}
+
+class ReleaseNameWordsModel{
+  
+}
+
+class 
 
 class ReleaseNameGenerator{
 
@@ -27,12 +38,19 @@ class ReleaseNameGenerator{
   }
 
   String generate(){
+    var letter = _randomUsableLetter();
+    return ("${_randomDictEntryForLetter(_adjectiveDict, letter)} ${_randomDictEntryForLetter(_animalDict, letter)}").capitalize();
+  }
+
+
+
+
+  String _randomUsableLetter(){
     var letter = _randomLetter();
     while(!_dictContainsLetter(_animalDict, letter) || !_dictContainsLetter(_adjectiveDict, letter)){
       letter = _randomLetter();
     }
-
-    return ("${_randomDictEntryForLetter(_adjectiveDict, letter)} ${_randomDictEntryForLetter(_animalDict, letter)}").capitalize();
+    return letter;
   }
 
   String _randomDictEntryForLetter(Dict dict, String letter){
@@ -52,7 +70,7 @@ class ReleaseNameGenerator{
     return _randomDictEntryForLetter(dict, randomLetter);
   }
 
-  static Future<Dict> _makeDictAsync (String fileName) async{
+  static Future<Dict> _makeDictAsync(String fileName) async{
     var dict = Dict();
 
     var file = File(fileName);
