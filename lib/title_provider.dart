@@ -10,7 +10,41 @@ class ReleaseNameModelIndex{
 
   ReleaseNameWordsModel? model;
 
+  bool get isValid{
+    return model != null && model!.isIndexValid(this);
+  }
 
+  void _checkAdjectiveIndexBounds(){
+    adjectiveIndex %= model!.adjectivesForLetter(letter)!.length;
+  }
+  void _checkAnimalIndexBounds(){
+    animalIndex %= model!.animalsForLetter(letter)!.length;
+  }
+
+  void nextAdjective(){
+    if(model != null && isValid){
+      ++adjectiveIndex;
+      _checkAdjectiveIndexBounds();
+    }
+  }
+  void previousAdjective(){
+    if(model != null && isValid){
+      --adjectiveIndex;
+      _checkAdjectiveIndexBounds();
+    }
+  }
+  void nextAnimal(){
+    if(model != null && isValid){
+      ++animalIndex;
+      _checkAnimalIndexBounds();
+    }
+  }
+  void previousAnimal(){
+    if(model != null && isValid){
+      --animalIndex;
+      _checkAnimalIndexBounds();
+    }
+  }
 }
 
 class ReleaseNameWordsModel{
@@ -52,10 +86,9 @@ class ReleaseNameWordsModel{
   }
 
   String? nameAt(ReleaseNameModelIndex idx){
-    if(isIndexValid(idx)){
-      return '${_adjectiveDict[idx.letter]![idx.adjectiveIndex]} ${}';
-    }
-    return null;
+    return isIndexValid(idx)
+      ? '${adjectiveAt(idx)} ${animalAt(idx)}'
+      : null;
   }
 
   String? adjectiveAt(ReleaseNameModelIndex idx){

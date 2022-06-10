@@ -21,12 +21,20 @@ void main() async {
   runApp(MyApp());
 }
 
-class TitleGeneratorCubit extends Cubit<String?> {
+class ReleaseNamGeneratorState{
+  String adjective = '';
+  String animal = '';
+  String get fullName => '$adjective $animal'; 
+
+  ReleaseNamGeneratorState(this.adjective, this.animal);
+}
+
+class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
   late ReleaseNameGenerator gen;
   late ReleaseNameModelIndex idx;
   ReleaseNameWordsModel? model;
 
-  TitleGeneratorCubit() : super(null) {
+  ReleaseGeneratorCubit() : super(null) {
     gen = ReleaseNameGenerator();
     idx = ReleaseNameModelIndex();
 
@@ -35,18 +43,31 @@ class TitleGeneratorCubit extends Cubit<String?> {
 
       gen.model = model;
       idx.model = model;
-      nextReleaseName();
+      randomReleaseName();
     });
   }
 
-  void nextReleaseName() {
+  void randomReleaseName() {
     if (model == null) {
       emit(null);
     }
 
     idx = gen.randomIndex();
-    
-    emit(model!.nameAt(idx));
+    _emitState();
+  }
+
+  void nextAdjective(){
+    idx.nextAdjective();
+    _emitState();
+  }
+  void nextAnimal(){
+    idx.nextAnimal();
+    _emitState();
+  }
+
+
+  void _emitState(){
+    emit(ReleaseNamGeneratorState(model!.adjectiveAt(idx)!, model!.animalAt(idx)!));
   }
 }
 
@@ -58,7 +79,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(useMaterial3: true),
       home: BlocProvider(
-        create: (context) => TitleGeneratorCubit(), child: Page1()));
+        create: (context) => ReleaseGeneratorCubit(), child: Page1()));
   }
 }
 
@@ -70,20 +91,38 @@ class Page1 extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Release name generator')),
       body: Center(
-        child: BlocBuilder<TitleGeneratorCubit, String?>(
-          builder: (contex, str) {
-            final isLoading = context.read<TitleGeneratorCubit>().state == null;
+        child: BlocBuilder<ReleaseGeneratorCubit, ReleaseNamGeneratorState?>(
+          builder: (contex, state) {
+            final isLoading = context.read<ReleaseGeneratorCubit>().state == null;
 
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (!isLoading) 
                  ...[ 
-                    Text(str ?? 'Loading'),
+                   Row(
+                    children: [
+                      Text(state!.adjective),
+                      TextButton(
+                        onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
+                        child: const Icon(Icons.skip_next)
+                      )
+                   ],
+                  ),
+                  Row(
+                    children: [
+                      Text(state!.animal),
+                      TextButton(
+                        onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal, 
+                        child: const Icon(Icons.skip_next)
+                      )
+                   ],
+                  ),
+
                     ElevatedButton(
                       child: const Text('Generate'),
                       onPressed: () {
-                        context.read<TitleGeneratorCubit>().nextReleaseName();
+                        context.read<ReleaseGeneratorCubit>().randomReleaseName();
                       },
                     ),
                   ],
