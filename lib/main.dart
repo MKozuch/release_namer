@@ -21,12 +21,14 @@ void main() async {
   runApp(MyApp());
 }
 
+enum StateTransition {random, nextAnimal, nextAdjective, previousAnimal, previousAdjective}
 class ReleaseNamGeneratorState{
   String adjective = '';
   String animal = '';
   String get fullName => '$adjective $animal'; 
+  StateTransition transition = StateTransition.random;
 
-  ReleaseNamGeneratorState(this.adjective, this.animal);
+  ReleaseNamGeneratorState(this.adjective, this.animal, this.transition);
 }
 
 class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
@@ -58,24 +60,24 @@ class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
 
   void nextAdjective(){
     idx.nextAdjective();
-    _emitState();
+    _emitState(StateTransition.nextAdjective);
   }
   void nextAnimal(){
     idx.nextAnimal();
-    _emitState();
+    _emitState(StateTransition.nextAnimal);
   }
   void previousAdjective(){
     idx.previousAdjective();
-    _emitState();
+    _emitState(StateTransition.previousAdjective);
   }
   void previousAnimal(){
     idx.previousAnimal();
-    _emitState();
+    _emitState(StateTransition.previousAnimal);
   }
 
 
-  void _emitState(){
-    emit(ReleaseNamGeneratorState(model!.adjectiveAt(idx)!, model!.animalAt(idx)!));
+  void _emitState([transition = StateTransition.random]){
+    emit(ReleaseNamGeneratorState(model!.adjectiveAt(idx)!, model!.animalAt(idx)!, transition));
   }
 }
 
@@ -120,7 +122,7 @@ class Page1 extends StatelessWidget {
                         )
                       ),
                       Expanded(child: 
-                        textSwitcherBuilder(contex, state!.adjective),
+                        textSwitcherBuilder(contex, state!.adjective, switchStyleFromStateTransition(state.transition)),
                       ),
                       Expanded(child: 
                         TextButton(
@@ -139,7 +141,7 @@ class Page1 extends StatelessWidget {
                         )
                       ),
                       Expanded(child: 
-                        textSwitcherBuilder(contex, state!.animal),
+                        textSwitcherBuilder(contex, state!.animal, switchStyleFromStateTransition(state.transition)),
                       ),
                       Expanded(child: 
                         TextButton(
@@ -167,17 +169,37 @@ class Page1 extends StatelessWidget {
   }
 }
 
-Widget textSwitcherBuilder(BuildContext context, String text){
+SwitchStyle switchStyleFromStateTransition(StateTransition stateTransition){
+  switch (stateTransition) {
+    case StateTransition.nextAdjective:
+    case StateTransition.nextAnimal:
+      return SwitchStyle.next;
+    case StateTransition.previousAdjective:
+    case StateTransition.previousAnimal:
+      return SwitchStyle.previous;
+    default:
+      return SwitchStyle.fade;
+  }
+}
+
+
+enum SwitchStyle{fade, next, previous}
+
+Widget textSwitcherBuilder(BuildContext context, String text, [SwitchStyle style = SwitchStyle.fade]){
   return AnimatedSwitcher(
     duration: const Duration(milliseconds: 500),
     reverseDuration: const Duration(milliseconds: 500),
     transitionBuilder: (Widget child, Animation<double> animation){ 
-      Offset startOffset;
-      if(child.key == ValueKey<String>(text)){ // is new child
-        startOffset = const Offset(1.0, 0.0);
+      if(style == SwitchStyle.fade){
+        return FadeTransition(opacity: animation, child: child);
       }
-      else{
-        startOffset = const Offset(-1.0, 0.0);
+
+      var startOffset = const Offset(1.0, 0);
+
+      if((style == SwitchStyle.next && child.key != ValueKey<String>(text))
+      || (style == SwitchStyle.previous && child.key == ValueKey<String>(text))){
+        startOffset = startOffset.scale(-1, -1);
+
       }
 
        var offset = Tween<Offset>(
