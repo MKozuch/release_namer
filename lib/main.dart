@@ -120,7 +120,8 @@ class Page1 extends StatelessWidget {
                         )
                       ),
                       Expanded(child: 
-                        Text(state!.adjective, textAlign: TextAlign.center)),
+                        textSwitcherBuilder(contex, state!.adjective),
+                      ),
                       Expanded(child: 
                         TextButton(
                           onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
@@ -138,7 +139,7 @@ class Page1 extends StatelessWidget {
                         )
                       ),
                       Expanded(child: 
-                        Text(state!.animal, textAlign: TextAlign.center,),
+                        textSwitcherBuilder(contex, state!.animal),
                       ),
                       Expanded(child: 
                         TextButton(
@@ -164,4 +165,36 @@ class Page1 extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget textSwitcherBuilder(BuildContext context, String text){
+  return AnimatedSwitcher(
+    duration: const Duration(milliseconds: 500),
+    reverseDuration: const Duration(milliseconds: 500),
+    transitionBuilder: (Widget child, Animation<double> animation){ 
+      Offset startOffset;
+      if(child.key == ValueKey<String>(text)){ // is new child
+        startOffset = const Offset(1.0, 0.0);
+      }
+      else{
+        startOffset = const Offset(-1.0, 0.0);
+      }
+
+       var offset = Tween<Offset>(
+         begin: startOffset,
+         end: const Offset(0.0, 0.0),
+       ).animate(animation);
+
+      return FadeTransition(
+        opacity: animation, 
+        child: 
+          SlideTransition(
+            position: offset,
+            child: child
+          )
+      );
+    },
+
+    child: Text(key: ValueKey<String>(text), text, textAlign: TextAlign.center),
+  );  
 }
