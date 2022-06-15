@@ -6,12 +6,19 @@ class FavoriteNames extends Cubit<List<String>>{
     emit(_list);
   }
 
-  List<String> _list = ['Gorgeous Gorilla', 'Astute Armadillo', 'Menial Monkey', 'Wretched Wallaby', 'Quintessential Quokka'];
-  //List<String> _list = [];
+  final List<String> _list = [
+    'Gorgeous Gorilla', 
+    'Astute Armadillo', 
+    'Menial Monkey', 
+    'Wretched Wallaby', 
+    'Quintessential Quokka', 
+    'Salty Scallop',
+  ];
 
   List<String> get() => _list;
 
   void add(String s){
+    if(_list.contains(s)) _list.remove(s);
     _list.add(s);
     emit(List.from(_list));
   }

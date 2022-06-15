@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:release_generator/title_provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:release_generator/widgets/favorites_list.dart';
 
 
 enum StateTransition {random, nextAnimal, nextAdjective, previousAnimal, previousAdjective}
@@ -14,7 +15,7 @@ class ReleaseNamGeneratorState{
   ReleaseNamGeneratorState(this.adjective, this.animal, this.transition);
 }
 
-// todo: replace with Bloc
+// TODO: replace with Bloc
 class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
   late ReleaseNameGenerator gen;
   late ReleaseNameModelIndex idx;
@@ -76,62 +77,13 @@ class Page1 extends StatelessWidget {
         child: Center(
           child: BlocBuilder<ReleaseGeneratorCubit, ReleaseNamGeneratorState?>(
             builder: (context, state) {
-              final isLoading = context.read<ReleaseGeneratorCubit>().state == null;
+              final isLoaded = context.read<ReleaseGeneratorCubit>().state != null;
 
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (!isLoading) 
-                  ...[ 
-                    Row(
-                      children: [
-                        Expanded( child: 
-                          TextButton(
-                            onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAdjective(), 
-                            child: const Icon(Icons.navigate_before),
-                          )
-                        ),
-                        Expanded(child: 
-                          textSwitcherBuilder(context, state!.adjective, switchStyleFromStateTransition(state.transition)),
-                        ),
-                        Expanded(child: 
-                          TextButton(
-                            onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
-                            child: const Icon(Icons.navigate_next)
-                          )
-                        )
-                    ],
-                    ),
-                    Row(
-                      children: [
-                        Expanded(child:
-                          TextButton(
-                            onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAnimal(), 
-                            child: const Icon(Icons.navigate_before),
-                          )
-                        ),
-                        Expanded(child: 
-                          textSwitcherBuilder(context, state!.animal, switchStyleFromStateTransition(state.transition)),
-                        ),
-                        Expanded(child: 
-                          TextButton(
-                            onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal(), 
-                            child: const Icon(Icons.navigate_next)
-                          ),
-                        ),
-                      ],
-                    ),
-
-                      ElevatedButton(
-                        child: const Text('Generate'),
-                        onPressed: () {
-                          context.read<ReleaseGeneratorCubit>().randomReleaseName();
-                        },
-                      ),
-                    ],
-                  if (isLoading) const CircularProgressIndicator()
-                ],
-              );
+              return isLoaded 
+                ? generatorBuilder(context, state!)
+                : const Center(
+                  child: CircularProgressIndicator(),
+                );
             },
           ),
         ),
@@ -169,7 +121,6 @@ Widget textSwitcherBuilder(BuildContext context, String text, [SwitchStyle style
       if((style == SwitchStyle.next && child.key != ValueKey<String>(text))
       || (style == SwitchStyle.previous && child.key == ValueKey<String>(text))){
         startOffset = startOffset.scale(-1, -1);
-
       }
 
        var offset = Tween<Offset>(
@@ -189,4 +140,76 @@ Widget textSwitcherBuilder(BuildContext context, String text, [SwitchStyle style
 
     child: Text(key: ValueKey<String>(text), text, textAlign: TextAlign.center),
   );  
+}
+
+Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
+  return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          children: [
+            Expanded( child: 
+              TextButton(
+                onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAdjective(), 
+                child: const Icon(Icons.navigate_before),
+              )
+            ),
+            Expanded(child: 
+              textSwitcherBuilder(context, state.adjective, switchStyleFromStateTransition(state.transition)),
+            ),
+            Expanded(child: 
+              TextButton(
+                onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
+                child: const Icon(Icons.navigate_next)
+              )
+            )
+          ],
+        ),
+        Row(
+          children: [
+            Expanded(child:
+              TextButton(
+                onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAnimal(), 
+                child: const Icon(Icons.navigate_before),
+              )
+            ),
+            Expanded(child: 
+              textSwitcherBuilder(context, state!.animal, switchStyleFromStateTransition(state.transition)),
+            ),
+            Expanded(child: 
+              TextButton(
+                onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal(), 
+                child: const Icon(Icons.navigate_next)
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              child: const Text('Generate'),
+              onPressed: () {
+                context.read<ReleaseGeneratorCubit>().randomReleaseName();
+              },
+            ),
+            BlocBuilder<FavoriteNames, List<String>>(
+              builder: (context, favoritesState){
+                final isBookmarked = favoritesState.contains(state.fullName);
+                return ElevatedButton(
+                  child: isBookmarked
+                    ? const Icon(Icons.star)
+                    : const Icon(Icons.star_border),
+                   onPressed: (){
+                     isBookmarked
+                      ? context.read<FavoriteNames>().remove(state.fullName)
+                      : context.read<FavoriteNames>().add(state.fullName);
+                   } 
+                  );
+                },
+            )
+          ],
+        ),
+    ],
+  );
 }
