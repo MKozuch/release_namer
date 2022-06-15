@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:release_generator/title_provider.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:release_generator/widgets/favorites_list.dart';
 
 
@@ -188,10 +190,12 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              child: const Text('Generate'),
-              onPressed: () {
-                context.read<ReleaseGeneratorCubit>().randomReleaseName();
-              },
+              child: const Icon(Icons.copy),
+              onPressed: () => Clipboard.setData(ClipboardData(text: state.fullName)),
+            ),
+            ElevatedButton(
+              child: const Text('Random'),
+              onPressed: () => context.read<ReleaseGeneratorCubit>().randomReleaseName(),
             ),
             BlocBuilder<FavoriteNames, List<String>>(
               builder: (context, favoritesState){

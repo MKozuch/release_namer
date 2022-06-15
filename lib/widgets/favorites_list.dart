@@ -15,17 +15,27 @@ class FavoriteNames extends Cubit<List<String>>{
     'Salty Scallop',
   ];
 
+  void _emitState(){
+    emit(List.from(_list));
+  }
+
   List<String> get() => _list;
 
   void add(String s){
     if(_list.contains(s)) _list.remove(s);
     _list.add(s);
-    emit(List.from(_list));
+    _emitState();
   }
 
   void remove(String s){
     _list.remove(s);
-    emit(List.from(_list));
+    _emitState();
+  }
+  
+  void swap(int fromIdx, int toIdx) {
+    if(fromIdx < toIdx) toIdx -= 1;
+    _list.insert(toIdx, _list.removeAt(fromIdx));
+    _emitState();
   }
 }
 
@@ -34,8 +44,11 @@ Widget favoritesListBuilder(BuildContext context) =>
         builder: (context, list) {
           return list.isEmpty
               ? const Center(child: Text('Add something to favourite list'))
-              : ListView.builder( // why this does not get called on emit?
+              : ReorderableListView.builder(
                   itemCount: list.length,
+                  onReorder: (fromIdx, toIdx){
+                    context.read<FavoriteNames>().swap(fromIdx, toIdx);
+                  },
                   itemBuilder: (context, index){
                     final text = list[index];
                     return Dismissible(
@@ -50,6 +63,7 @@ Widget favoritesListBuilder(BuildContext context) =>
                         context.read<FavoriteNames>().remove(text);
                       },
                       child: ListTile(
+                        dense: true,
                         title: Text(text),
                         trailing: TextButton(
                           onPressed: ()=> context.read<FavoriteNames>().remove(text),
