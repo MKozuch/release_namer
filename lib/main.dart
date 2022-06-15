@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:window_size/window_size.dart';
 
-import 'package:release_generator/title_provider.dart';
+import 'package:release_generator/pages/release_name_generator.dart';
+import 'package:release_generator/widgets/favorites_list.dart';
 
 void main() async {
 
@@ -15,208 +17,46 @@ void main() async {
     setWindowTitle('Release namer');
     setWindowMinSize(const Size(400, 300));
     setWindowMaxSize(Size.infinite);
-    setWindowFrame(const Rect.fromLTWH(0, 0, 640, 480));
+    setWindowFrame(const Rect.fromLTWH(0, 0, 400, 30));
   }
 
-  runApp(MyApp());
+  runApp(ReleaseNamerApp());
 }
 
-enum StateTransition {random, nextAnimal, nextAdjective, previousAnimal, previousAdjective}
-class ReleaseNamGeneratorState{
-  String adjective = '';
-  String animal = '';
-  String get fullName => '$adjective $animal'; 
-  StateTransition transition = StateTransition.random;
 
-  ReleaseNamGeneratorState(this.adjective, this.animal, this.transition);
-}
-
-class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
-  late ReleaseNameGenerator gen;
-  late ReleaseNameModelIndex idx;
-  ReleaseNameWordsModel? model;
-
-  ReleaseGeneratorCubit() : super(null) {
-    gen = ReleaseNameGenerator();
-    idx = ReleaseNameModelIndex();
-
-    ReleaseNameWordsModel.create().then((value) {
-      model = value;
-
-      gen.model = model;
-      idx.model = model;
-      randomReleaseName();
-    });
-  }
-
-  void randomReleaseName() {
-    if (model == null) {
-      emit(null);
-    }
-
-    idx = gen.randomIndex();
-    _emitState();
-  }
-
-  void nextAdjective(){
-    idx.nextAdjective();
-    _emitState(StateTransition.nextAdjective);
-  }
-  void nextAnimal(){
-    idx.nextAnimal();
-    _emitState(StateTransition.nextAnimal);
-  }
-  void previousAdjective(){
-    idx.previousAdjective();
-    _emitState(StateTransition.previousAdjective);
-  }
-  void previousAnimal(){
-    idx.previousAnimal();
-    _emitState(StateTransition.previousAnimal);
-  }
-
-
-  void _emitState([transition = StateTransition.random]){
-    emit(ReleaseNamGeneratorState(model!.adjectiveAt(idx)!, model!.animalAt(idx)!, transition));
-  }
-}
-
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
+class ReleaseNamerApp extends StatelessWidget {
+  ReleaseNamerApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: const ColorScheme.dark()
-      ),
-      home: BlocProvider(
-        create: (context) => ReleaseGeneratorCubit(), child: Page1()));
-  }
-}
-
-class Page1 extends StatelessWidget {
-  Page1({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Release name generator')),
-      body: Center(
-        child: BlocBuilder<ReleaseGeneratorCubit, ReleaseNamGeneratorState?>(
-          builder: (contex, state) {
-            final isLoading = context.read<ReleaseGeneratorCubit>().state == null;
-
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (!isLoading) 
-                 ...[ 
-                   Row(
-                    children: [
-                      Expanded( child: 
-                        TextButton(
-                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAdjective(), 
-                          child: const Icon(Icons.navigate_before),
-                        )
-                      ),
-                      Expanded(child: 
-                        textSwitcherBuilder(contex, state!.adjective, switchStyleFromStateTransition(state.transition)),
-                      ),
-                      Expanded(child: 
-                        TextButton(
-                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
-                          child: const Icon(Icons.navigate_next)
-                        )
-                      )
-                   ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(child:
-                        TextButton(
-                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAnimal(), 
-                          child: const Icon(Icons.navigate_before),
-                        )
-                      ),
-                      Expanded(child: 
-                        textSwitcherBuilder(contex, state!.animal, switchStyleFromStateTransition(state.transition)),
-                      ),
-                      Expanded(child: 
-                        TextButton(
-                          onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal(), 
-                          child: const Icon(Icons.navigate_next)
-                        ),
-                      ),
-                   ],
-                  ),
-
-                    ElevatedButton(
-                      child: const Text('Generate'),
-                      onPressed: () {
-                        context.read<ReleaseGeneratorCubit>().randomReleaseName();
-                      },
-                    ),
-                  ],
-                if (isLoading) const CircularProgressIndicator()
-              ],
-            );
+  Widget build(BuildContext context) =>
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<FavoriteNames>(
+          create: (BuildContext _){
+            return FavoriteNames();
           },
+        )
+      ],
+      child: MaterialApp(
+        themeMode: ThemeMode.dark,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSwatch(
+            primarySwatch: Colors.amber, brightness: Brightness.light),
+          textTheme: GoogleFonts.latoTextTheme(),
         ),
+        home: Scaffold(
+          appBar: AppBar(
+              title: const Text('Release name generator'),
+              actions: const [
+                Icon(Icons.air),
+              ]),
+          drawer: Drawer(
+            child: favoritesListBuilder(context),
+          ),
+        body: Page1(),
       ),
-    );
-  }
+    ),
+  );
 }
 
-SwitchStyle switchStyleFromStateTransition(StateTransition stateTransition){
-  switch (stateTransition) {
-    case StateTransition.nextAdjective:
-    case StateTransition.nextAnimal:
-      return SwitchStyle.next;
-    case StateTransition.previousAdjective:
-    case StateTransition.previousAnimal:
-      return SwitchStyle.previous;
-    default:
-      return SwitchStyle.fade;
-  }
-}
-
-
-enum SwitchStyle{fade, next, previous}
-
-Widget textSwitcherBuilder(BuildContext context, String text, [SwitchStyle style = SwitchStyle.fade]){
-  return AnimatedSwitcher(
-    duration: const Duration(milliseconds: 500),
-    reverseDuration: const Duration(milliseconds: 500),
-    transitionBuilder: (Widget child, Animation<double> animation){ 
-      if(style == SwitchStyle.fade){
-        return FadeTransition(opacity: animation, child: child);
-      }
-
-      var startOffset = const Offset(1.0, 0);
-
-      if((style == SwitchStyle.next && child.key != ValueKey<String>(text))
-      || (style == SwitchStyle.previous && child.key == ValueKey<String>(text))){
-        startOffset = startOffset.scale(-1, -1);
-
-      }
-
-       var offset = Tween<Offset>(
-         begin: startOffset,
-         end: const Offset(0.0, 0.0),
-       ).animate(animation);
-
-      return FadeTransition(
-        opacity: animation, 
-        child: 
-          SlideTransition(
-            position: offset,
-            child: child
-          )
-      );
-    },
-
-    child: Text(key: ValueKey<String>(text), text, textAlign: TextAlign.center),
-  );  
-}
