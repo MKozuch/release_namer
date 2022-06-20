@@ -20,12 +20,12 @@ void main() async {
     setWindowFrame(const Rect.fromLTWH(0, 0, 400, 30));
   }
 
-  runApp(ReleaseNamerApp());
+  runApp(const ReleaseNamerApp());
 }
 
 
 class ReleaseNamerApp extends StatelessWidget {
-  ReleaseNamerApp({super.key});
+  const ReleaseNamerApp({super.key});
 
   @override
   Widget build(BuildContext context) =>
@@ -35,6 +35,7 @@ class ReleaseNamerApp extends StatelessWidget {
           create: (BuildContext _){
             return FavoriteNames();
           },
+          lazy: false,
         )
       ],
       child: MaterialApp(
@@ -54,7 +55,7 @@ class ReleaseNamerApp extends StatelessWidget {
           drawer: Drawer(
             child: favoritesListBuilder(context),
           ),
-        body: Page1(),
+        body: const Page1(),
       ),
     ),
   );

@@ -70,7 +70,7 @@ class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
 
 
 class Page1 extends StatelessWidget {
-  Page1({super.key});
+  const Page1({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +176,7 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
               )
             ),
             Expanded(child: 
-              textSwitcherBuilder(context, state!.animal, switchStyleFromStateTransition(state.transition)),
+              textSwitcherBuilder(context, state.animal, switchStyleFromStateTransition(state.transition)),
             ),
             Expanded(child: 
               TextButton(

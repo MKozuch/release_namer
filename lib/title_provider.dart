@@ -50,7 +50,6 @@ class ReleaseNameModelIndex{
 class ReleaseNameWordsModel{
   late Dict _animalDict;
   late Dict _adjectiveDict;
-  static late ReleaseNameWordsModel _instance;
 
   ReleaseNameWordsModel._create();
 
@@ -103,7 +102,7 @@ class ReleaseNameWordsModel{
   }
 
   static Future<Dict> _makeDictAsync(String fileName) async{
-    var dict = Dict();
+    Dict dict = {};
 
     var file = File(fileName);
     file.readAsLinesSync().forEach((line) {
