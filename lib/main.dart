@@ -33,7 +33,7 @@ class ReleaseNamerApp extends StatelessWidget {
       providers: [
         BlocProvider<FavoriteNames>(
           create: (BuildContext _){
-            return FavoriteNames();
+            return FavoriteNames.withFilePersistence();
           },
           lazy: false,
         )
