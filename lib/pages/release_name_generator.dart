@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -159,9 +160,25 @@ Widget textSwitcherBuilder(BuildContext context, String text, [SwitchStyle style
 }
 
 Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
+  final generatorBloc = BlocProvider.of<ReleaseGeneratorBloc>(context);
+  final animals = generatorBloc.model!.animalsForLetter(generatorBloc.idx.letter);
+  final adjectives = generatorBloc.model!.adjectivesForLetter(generatorBloc.idx.letter);
+
   return Column(
     mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Container(
+          height: 25,
+          width: 200,
+          child: Center(child: 
+            StatelessWordCarusel(
+              words: animals!,
+              currentIndex: generatorBloc.idx.animalIndex,
+              onNextPage: ()=> generatorBloc.add(NextAnimal()),
+              onPrevPage: ()=> generatorBloc.add(PrevAnimal())
+            )),
+        ),
+
         Row(
           children: [
             Expanded( child: 
@@ -229,5 +246,116 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
           ],
         ),
     ],
+    
   );
+}
+
+
+
+class StatefulWordCarousel extends StatefulWidget{
+  const StatefulWordCarousel({
+    Key? key,
+    required this.words,
+    required this.onNextPage,
+    required this.onPrevPage,
+    required this.currentIndex
+  }) : super(key: key);
+
+  final List<String> words;
+  final void Function() onNextPage;
+  final void Function() onPrevPage;
+  final int currentIndex;
+  
+  @override
+  State<StatefulWordCarousel> createState() => _StatefulWordCarouselState();
+}
+
+class _StatefulWordCarouselState extends State<StatefulWordCarousel> {
+  _StatefulWordCarouselState();
+
+  final _pageController = PageController(
+    viewportFraction: .5,
+  );
+
+  List<String> _words = [];
+  set words(List<String> w){
+    _words = w;
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override 
+  Widget build(BuildContext context){
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if(details.primaryVelocity! > 0){
+          onPrevPage();
+        }
+        if(details.primaryVelocity! < 0){
+          onNextPage();
+        }
+      },
+      child: PageView.builder(
+        scrollDirection: Axis.horizontal,
+        controller: PageController(
+          initialPage: currentIndex,
+          viewportFraction: .5,
+          ),
+        itemCount: words.length * 3,
+        itemBuilder: (BuildContext context, int index){
+
+          return Container(
+             color: index % 2 == 0 ? Colors.green : Colors.blue[700],
+             child: Center(child: Text(words![index%words.length])));
+        },
+      ),
+    );
+  }
+}
+
+class StatelessWordCarusel extends StatelessWidget{
+  StatelessWordCarusel({
+    Key? key,
+    required this.words,
+    required this.onNextPage,
+    required this.onPrevPage,
+    required this.currentIndex
+  }) : super(key: key);
+
+  final List<String> words;
+  final void Function() onNextPage;
+  final void Function() onPrevPage;
+  final int currentIndex;
+
+  @override 
+  Widget build(BuildContext context){
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if(details.primaryVelocity! > 0){
+          onPrevPage();
+        }
+        if(details.primaryVelocity! < 0){
+          onNextPage();
+        }
+      },
+      child: PageView.builder(
+        scrollDirection: Axis.horizontal,
+        controller: PageController(
+          initialPage: currentIndex,
+          viewportFraction: .5,
+          ),
+        itemCount: words.length * 3,
+        itemBuilder: (BuildContext context, int index){
+
+          return Container(
+             color: index % 2 == 0 ? Colors.green : Colors.blue[700],
+             child: Center(child: Text(words![index%words.length])));
+        },
+      ),
+    );
+  }
 }
