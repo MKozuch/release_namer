@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -13,11 +14,13 @@ import 'package:release_generator/widgets/favorites_list.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowTitle('Release namer');
-    setWindowMinSize(const Size(400, 300));
-    setWindowMaxSize(Size.infinite);
-    setWindowFrame(const Rect.fromLTWH(0, 0, 400, 30));
+  if(!kIsWeb){
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      setWindowTitle('Release namer');
+      setWindowMinSize(const Size(400, 300));
+      setWindowMaxSize(Size.infinite);
+      setWindowFrame(const Rect.fromLTWH(0, 0, 400, 30));
+    }
   }
 
   runApp(const ReleaseNamerApp());
@@ -33,7 +36,7 @@ class ReleaseNamerApp extends StatelessWidget {
       providers: [
         BlocProvider<FavoriteNames>(
           create: (BuildContext _){
-            return FavoriteNames.withFilePersistence();
+            return kIsWeb ? FavoriteNames() : FavoriteNames.withFilePersistence();
           },
           lazy: false,
         )
