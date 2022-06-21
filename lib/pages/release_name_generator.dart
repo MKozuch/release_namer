@@ -17,53 +17,68 @@ class ReleaseNamGeneratorState{
   ReleaseNamGeneratorState(this.adjective, this.animal, this.transition);
 }
 
-// TODO: replace with Bloc
-class ReleaseGeneratorCubit extends Cubit<ReleaseNamGeneratorState?> {
+abstract class GeneratorEvent{}
+class NextAdjective extends GeneratorEvent{}
+class PrevAdjective extends GeneratorEvent{}
+class NextAnimal extends GeneratorEvent{}
+class PrevAnimal extends GeneratorEvent{}
+class RandomTitle extends GeneratorEvent{}
+
+class ReleaseGeneratorBloc extends Bloc<GeneratorEvent, ReleaseNamGeneratorState?> {
   late ReleaseNameGenerator gen;
   late ReleaseNameModelIndex idx;
   ReleaseNameWordsModel? model;
 
-  ReleaseGeneratorCubit() : super(null) {
+  ReleaseGeneratorBloc() : super(null) {
     gen = ReleaseNameGenerator();
     idx = ReleaseNameModelIndex();
 
+    on<NextAdjective>(_nextAdjective);
+    on<PrevAdjective>(_previousAdjective);
+    on<NextAnimal>(_nextAnimal);
+    on<PrevAnimal>(_previousAnimal);
+    on<RandomTitle>(_randomReleaseName);
+
     ReleaseNameWordsModel.create().then((value) {
       model = value;
-
       gen.model = model;
       idx.model = model;
-      randomReleaseName();
+      add(RandomTitle());
     });
   }
 
-  void randomReleaseName() {
+   @override
+  void onChange(Change<ReleaseNamGeneratorState?> change) {
+    super.onChange(change);
+  }
+
+  void _randomReleaseName(GeneratorEvent event, Emitter<ReleaseNamGeneratorState?> emit) {
     if (model == null) {
       emit(null);
     }
 
     idx = gen.randomIndex();
-    _emitState();
+    _emitStateHelper(emit, StateTransition.random);
   }
 
-  void nextAdjective(){
+  void _nextAdjective(GeneratorEvent event, Emitter<ReleaseNamGeneratorState?> emit){
     idx.nextAdjective();
-    _emitState(StateTransition.nextAdjective);
+    _emitStateHelper(emit, StateTransition.nextAdjective);
   }
-  void nextAnimal(){
+  void _nextAnimal(GeneratorEvent event, Emitter<ReleaseNamGeneratorState?> emit){
     idx.nextAnimal();
-    _emitState(StateTransition.nextAnimal);
+    _emitStateHelper(emit, StateTransition.nextAnimal);
   }
-  void previousAdjective(){
+  void _previousAdjective(GeneratorEvent event, Emitter<ReleaseNamGeneratorState?> emit){
     idx.previousAdjective();
-    _emitState(StateTransition.previousAdjective);
+    _emitStateHelper(emit, StateTransition.previousAdjective);
   }
-  void previousAnimal(){
+  void _previousAnimal(GeneratorEvent event, Emitter<ReleaseNamGeneratorState?> emit){
     idx.previousAnimal();
-    _emitState(StateTransition.previousAnimal);
+    _emitStateHelper(emit, StateTransition.previousAnimal);
   }
 
-
-  void _emitState([transition = StateTransition.random]){
+  void _emitStateHelper(Emitter<ReleaseNamGeneratorState?> emit, [transition = StateTransition.random]){
     emit(ReleaseNamGeneratorState(model!.adjectiveAt(idx)!, model!.animalAt(idx)!, transition));
   }
 }
@@ -74,12 +89,12 @@ class Page1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ReleaseGeneratorCubit>(
-        create: (context) => ReleaseGeneratorCubit(),
+    return BlocProvider<ReleaseGeneratorBloc>(
+        create: (context) => ReleaseGeneratorBloc(),
         child: Center(
-          child: BlocBuilder<ReleaseGeneratorCubit, ReleaseNamGeneratorState?>(
+          child: BlocBuilder<ReleaseGeneratorBloc, ReleaseNamGeneratorState?>(
             builder: (context, state) {
-              final isLoaded = context.read<ReleaseGeneratorCubit>().state != null;
+              final isLoaded = context.read<ReleaseGeneratorBloc>().state != null;
 
               return isLoaded 
                 ? generatorBuilder(context, state!)
@@ -106,13 +121,12 @@ SwitchStyle switchStyleFromStateTransition(StateTransition stateTransition){
   }
 }
 
-
 enum SwitchStyle{fade, next, previous}
 
 Widget textSwitcherBuilder(BuildContext context, String text, [SwitchStyle style = SwitchStyle.fade]){
   return AnimatedSwitcher(
-    duration: const Duration(milliseconds: 500),
-    reverseDuration: const Duration(milliseconds: 500),
+    duration: const Duration(milliseconds: 250),
+    reverseDuration: const Duration(milliseconds: 250),
     transitionBuilder: (Widget child, Animation<double> animation){ 
       if(style == SwitchStyle.fade){
         return FadeTransition(opacity: animation, child: child);
@@ -152,7 +166,7 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
           children: [
             Expanded( child: 
               TextButton(
-                onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAdjective(), 
+                onPressed: ()=> context.read<ReleaseGeneratorBloc>().add(PrevAdjective()), 
                 child: const Icon(Icons.navigate_before),
               )
             ),
@@ -161,7 +175,7 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
             ),
             Expanded(child: 
               TextButton(
-                onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAdjective(), 
+                onPressed: ()=> context.read<ReleaseGeneratorBloc>().add(NextAdjective()), 
                 child: const Icon(Icons.navigate_next)
               )
             )
@@ -171,7 +185,7 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
           children: [
             Expanded(child:
               TextButton(
-                onPressed: ()=> context.read<ReleaseGeneratorCubit>().previousAnimal(), 
+                onPressed: ()=> context.read<ReleaseGeneratorBloc>().add(PrevAnimal()), 
                 child: const Icon(Icons.navigate_before),
               )
             ),
@@ -180,7 +194,7 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
             ),
             Expanded(child: 
               TextButton(
-                onPressed: ()=> context.read<ReleaseGeneratorCubit>().nextAnimal(), 
+                onPressed: ()=> context.read<ReleaseGeneratorBloc>().add(NextAnimal()), 
                 child: const Icon(Icons.navigate_next)
               ),
             ),
@@ -195,7 +209,7 @@ Widget generatorBuilder(BuildContext context, ReleaseNamGeneratorState state){
             ),
             ElevatedButton(
               child: const Text('Random'),
-              onPressed: () => context.read<ReleaseGeneratorCubit>().randomReleaseName(),
+              onPressed: () => context.read<ReleaseGeneratorBloc>().add(RandomTitle()),
             ),
             BlocBuilder<FavoriteNames, List<String>>(
               builder: (context, favoritesState){
