@@ -1,5 +1,7 @@
-import 'dart:io';
+import 'dart:convert';
 import 'dart:math';
+
+import 'package:flutter/services.dart' show rootBundle;
 
 typedef Dict = Map<String, List<String>>;
 
@@ -57,8 +59,8 @@ class ReleaseNameWordsModel{
     var model = ReleaseNameWordsModel._create();
 
     var futures = <Future>[];
-    futures.add(_makeDictAsync('./assets/animals.txt'           ).then((dict){model._animalDict    = dict;}));
-    futures.add(_makeDictAsync('./assets/english-adjectives.txt').then((dict){model._adjectiveDict = dict;}));
+    futures.add(_makeDictAsync('assets/animals.txt'           ).then((dict){model._animalDict    = dict;}));
+    futures.add(_makeDictAsync('assets/english-adjectives.txt').then((dict){model._adjectiveDict = dict;}));
     futures.add(Future.delayed(const Duration(seconds: 1))); // simulate fetching data
     await Future.wait(futures);
 
@@ -104,8 +106,8 @@ class ReleaseNameWordsModel{
   static Future<Dict> _makeDictAsync(String fileName) async{
     Dict dict = {};
 
-    var file = File(fileName);
-    file.readAsLinesSync().forEach((line) {
+    var str = await rootBundle.loadString(fileName);
+    const LineSplitter().convert(str).forEach((line) { 
       line = line.trim().capitalize();
       if(line.isEmpty){
         return;
