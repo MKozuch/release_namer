@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,14 @@ void main() async {
 }
 
 
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+    };
+}
+
 class ReleaseNamerApp extends StatelessWidget {
   const ReleaseNamerApp({super.key});
 
@@ -42,6 +51,7 @@ class ReleaseNamerApp extends StatelessWidget {
         )
       ],
       child: MaterialApp(
+        scrollBehavior: AppScrollBehavior(),
         themeMode: ThemeMode.dark,
         theme: ThemeData(
           useMaterial3: true,
